@@ -1,157 +1,268 @@
+// components/ProductDetails.js
+import Header from "./Header";
+
 export default function ProductDetails(products) {
-  const product = products[0]; // Get the first product
+  const product = products[0];
+  let currentImageIndex = 0;
+  let cartCount = 0;
 
-  // Main container
-  const container = document.createElement("div");
-  container.className = "flex flex-col md:flex-row gap-8 py-8";
+  function createGallery() {
+    const gallery = document.createElement("div");
+    gallery.className = "md:w-1/2";
 
-  // Image container
-  const imageContainer = document.createElement("div");
-  imageContainer.className = "w-full md:w-1/2";
+    // Main image container
+    const mainImageContainer = document.createElement("div");
+    mainImageContainer.className = "relative";
 
-  // Preview image container
-  const previewImageContainer = document.createElement("div");
-  previewImageContainer.className = "flex gap-2";
+    const mainImage = document.createElement("img");
+    mainImage.src = product.previewimages[currentImageIndex];
+    mainImage.alt = product.title;
+    mainImage.className = "w-full rounded-2xl cursor-pointer";
 
-  product.previewimages.forEach((previewImageSrc) => {
-    const previewImage = document.createElement("img");
-    previewImage.src = previewImageSrc;
-    previewImage.alt = product.title;
-    previewImage.className = "w-1/4 rounded-lg object-cover";
-    previewImageContainer.appendChild(previewImage);
-  });
+    // Navigation buttons for mobile
+    const prevButton = document.createElement("button");
+    prevButton.className =
+      "md:hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-4";
+    prevButton.innerHTML = `
+      <img src="src/images/icon-previous.svg" alt="Previous" class="w-3 h-3">
+    `;
 
-  // Main Image
-  const image = document.createElement("img");
-  image.src = product.image;
-  image.alt = product.title;
-  image.className = "w-4/5 rounded-lg object-cover";
-  imageContainer.appendChild(image);
-  imageContainer.appendChild(previewImageContainer);
+    const nextButton = document.createElement("button");
+    nextButton.className =
+      "md:hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-4";
+    nextButton.innerHTML = `
+      <img src="src/images/icon-next.svg" alt="Next" class="w-3 h-3">
+    `;
 
-  // Content container
-  const contentContainer = document.createElement("div");
-  contentContainer.className = "w-full md:w-1/2 p-4 space-y-6";
+    prevButton.addEventListener("click", () => {
+      currentImageIndex =
+        (currentImageIndex - 1 + product.previewimages.length) %
+        product.previewimages.length;
+      mainImage.src = product.previewimages[currentImageIndex];
+      updateThumbnails();
+    });
 
-  // Company motto
-  const motto = document.createElement("h2");
-  motto.textContent = product.moto;
-  motto.className = "text-gray-500 font-bold tracking-wide text-xl uppercase";
+    nextButton.addEventListener("click", () => {
+      currentImageIndex =
+        (currentImageIndex + 1) % product.previewimages.length;
+      mainImage.src = product.previewimages[currentImageIndex];
+      updateThumbnails();
+    });
 
-  // Product title
-  const title = document.createElement("h1");
-  title.textContent = product.title;
-  title.className = "text-3xl font-bold text-gray-900";
+    mainImageContainer.appendChild(mainImage);
+    mainImageContainer.appendChild(prevButton);
+    mainImageContainer.appendChild(nextButton);
 
-  // Product description
-  const description = document.createElement("p");
-  description.textContent = product.description;
-  description.className = "text-gray-600";
+    // Thumbnails
+    const thumbnailContainer = document.createElement("div");
+    thumbnailContainer.className = "hidden md:grid grid-cols-4 gap-4 mt-8";
 
-  // Price container
-  const priceContainer = document.createElement("div");
-  priceContainer.className = "space-y-2";
+    function updateThumbnails() {
+      thumbnailContainer.innerHTML = "";
+      product.previewimages.forEach((img, index) => {
+        const thumbnail = document.createElement("div");
+        thumbnail.className =
+          "relative cursor-pointer rounded-xl overflow-hidden";
 
-  const priceRow = document.createElement("div");
-  priceRow.className = "flex items-center gap-4";
+        const thumbnailImg = document.createElement("img");
+        thumbnailImg.src = img;
+        thumbnailImg.alt = `Thumbnail ${index + 1}`;
+        thumbnailImg.className = "w-full rounded-xl";
 
-  const price = document.createElement("span");
-  price.textContent = `$${product.price}.00`;
-  price.className = "text-3xl font-bold";
+        const overlay = document.createElement("div");
+        overlay.className = `absolute inset-0 transition-opacity ${
+          currentImageIndex === index
+            ? "bg-white bg-opacity-75 border-2 border-orange-500"
+            : "hover:bg-white hover:bg-opacity-50"
+        }`;
 
-  const discount = document.createElement("span");
-  discount.textContent = "50%";
-  discount.className =
-    "bg-[#bbbbbb] text-orange-500 px-2 py-1 rounded-md font-bold";
+        thumbnail.appendChild(thumbnailImg);
+        thumbnail.appendChild(overlay);
 
-  priceRow.appendChild(price);
-  priceRow.appendChild(discount);
+        thumbnail.addEventListener("click", () => {
+          currentImageIndex = index;
+          mainImage.src = product.previewimages[currentImageIndex];
+          updateThumbnails();
+        });
 
-  const originalPrice = document.createElement("div");
-  originalPrice.textContent = `$${(product.price * 2).toFixed(2)}`;
-  originalPrice.className = "text-gray-400 line-through";
-
-  priceContainer.appendChild(priceRow);
-  priceContainer.appendChild(originalPrice);
-
-  // Actions container
-  const actionsContainer = document.createElement("div");
-  actionsContainer.className = "flex flex-col sm:flex-row gap-4";
-
-  // Quantity selector
-  const quantitySelector = createQuantitySelector(product, price);
-
-  // Add to cart button
-  const addToCartBtn = document.createElement("button");
-  addToCartBtn.className =
-    "flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg px-4 py-3 flex items-center justify-center gap-2";
-  addToCartBtn.innerHTML = `
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-    </svg>
-    Add to cart
-  `;
-
-  actionsContainer.appendChild(quantitySelector);
-  actionsContainer.appendChild(addToCartBtn);
-
-  // Append all elements to content container
-  contentContainer.appendChild(motto);
-  contentContainer.appendChild(title);
-  contentContainer.appendChild(description);
-  contentContainer.appendChild(priceContainer);
-  contentContainer.appendChild(actionsContainer);
-
-  // Append main sections to container
-  container.appendChild(imageContainer);
-  container.appendChild(contentContainer);
-
-  return container;
-}
-
-function createQuantitySelector(product, priceElement) {
-  const container = document.createElement("div");
-  container.className = "flex items-center bg-gray-100 rounded-lg";
-
-  const minusBtn = document.createElement("button");
-  minusBtn.className = "px-4 py-2 text-orange-500 hover:text-orange-600";
-  minusBtn.innerHTML = `
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-    </svg>
-  `;
-
-  const quantityDisplay = document.createElement("span");
-  quantityDisplay.className = "w-12 text-center font-bold";
-  quantityDisplay.textContent = "0";
-
-  const plusBtn = document.createElement("button");
-  plusBtn.className = "px-4 py-2 text-orange-500 hover:text-orange-600";
-  plusBtn.innerHTML = `
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-    </svg>
-  `;
-
-  // Add event listeners
-  let quantity = 0;
-  minusBtn.addEventListener("click", () => {
-    if (quantity > 0) {
-      quantity--;
-      quantityDisplay.textContent = quantity;
-      priceElement.textContent = `$${(product.price * quantity).toFixed(2)}`;
+        thumbnailContainer.appendChild(thumbnail);
+      });
     }
-  });
 
-  plusBtn.addEventListener("click", () => {
-    quantity++;
-    quantityDisplay.textContent = quantity;
-    priceElement.textContent = `$${(product.price * quantity).toFixed(2)}`;
-  });
+    updateThumbnails();
+    gallery.appendChild(mainImageContainer);
+    gallery.appendChild(thumbnailContainer);
 
-  container.appendChild(minusBtn);
-  container.appendChild(quantityDisplay);
-  container.appendChild(plusBtn);
+    return gallery;
+  }
+
+  function createProductInfo() {
+    const productInfo = document.createElement("div");
+    productInfo.className = "md:w-1/2 px-6 md:px-20 py-6";
+
+    const moto = document.createElement("p");
+    moto.className = "text-orange-500 font-bold tracking-wider text-sm mb-4";
+    moto.textContent = product.moto;
+
+    const title = document.createElement("h1");
+    title.className = "text-3xl md:text-5xl font-bold mb-8";
+    title.textContent = product.title;
+
+    const description = document.createElement("p");
+    description.className = "text-gray-500 mb-8";
+    description.textContent = product.description;
+
+    const priceContainer = document.createElement("div");
+    priceContainer.className = "flex flex-col gap-2 mb-8";
+
+    const priceRow = document.createElement("div");
+    priceRow.className = "flex items-center gap-4";
+
+    const price = document.createElement("span");
+    price.className = "text-3xl font-bold";
+    price.textContent = `$${product.price.toFixed(2)}`;
+
+    const discount = document.createElement("span");
+    discount.className =
+      "bg-orange-100 text-orange-500 font-bold px-2 py-1 rounded";
+    discount.textContent = "50%";
+
+    const originalPrice = document.createElement("span");
+    originalPrice.className = "text-gray-400 line-through";
+    originalPrice.textContent = `$${(product.price * 2).toFixed(2)}`;
+
+    priceRow.appendChild(price);
+    priceRow.appendChild(discount);
+    priceContainer.appendChild(priceRow);
+    priceContainer.appendChild(originalPrice);
+
+    // Add to cart section
+    const addToCartContainer = document.createElement("div");
+    addToCartContainer.className = "flex flex-col md:flex-row gap-4";
+
+    const quantityContainer = document.createElement("div");
+    quantityContainer.className =
+      "flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2 md:w-1/3";
+
+    const minusButton = document.createElement("button");
+    minusButton.className =
+      "text-orange-500 font-bold text-2xl hover:opacity-75";
+    minusButton.textContent = "-";
+
+    const quantity = document.createElement("span");
+    quantity.className = "font-bold";
+    quantity.textContent = "1";
+
+    const plusButton = document.createElement("button");
+    plusButton.className =
+      "text-orange-500 font-bold text-2xl hover:opacity-75";
+    plusButton.textContent = "+";
+
+    const addToCartButton = document.createElement("button");
+    addToCartButton.className =
+      "bg-orange-500 text-white rounded-lg px-8 py-3 flex items-center justify-center gap-4 hover:bg-orange-600 md:flex-1";
+    addToCartButton.innerHTML = `
+      <img src="src/images/icon-cart.svg" alt="Cart" class="w-5 h-5 filter brightness-0 invert">
+      <span class="font-bold">Add to cart</span>
+    `;
+
+    // Event listeners
+    let currentQuantity = 0;
+
+    minusButton.addEventListener("click", () => {
+      if (currentQuantity > 0) {
+        currentQuantity--;
+        quantity.textContent = currentQuantity;
+        updatePrice();
+      }
+    });
+
+    plusButton.addEventListener("click", () => {
+      currentQuantity++;
+      quantity.textContent = currentQuantity;
+      updatePrice();
+    });
+
+    addToCartButton.addEventListener("click", () => {
+      if (currentQuantity > 0) {
+        cartCount += currentQuantity;
+        const cartCountElement = document.getElementById("cart-count");
+        if (cartCountElement) {
+          cartCountElement.textContent = cartCount;
+        }
+
+        // Add item to cart
+        const header = document.querySelector("header");
+        if (header && header.addToCart) {
+          header.addToCart({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            quantity: currentQuantity,
+            image: product.image,
+          });
+        }
+
+        currentQuantity = 0;
+        quantity.textContent = "0";
+        updatePrice();
+
+        // Show toast notification
+        showToast("Items added to cart");
+      }
+    });
+
+    function updatePrice() {
+      const totalPrice = product.price * currentQuantity;
+      price.textContent = `$${totalPrice.toFixed(2)}`;
+      originalPrice.textContent = `$${(totalPrice * 2).toFixed(2)}`;
+    }
+
+    quantityContainer.appendChild(minusButton);
+    quantityContainer.appendChild(quantity);
+    quantityContainer.appendChild(plusButton);
+
+    addToCartContainer.appendChild(quantityContainer);
+    addToCartContainer.appendChild(addToCartButton);
+
+    productInfo.appendChild(moto);
+    productInfo.appendChild(title);
+    productInfo.appendChild(description);
+    productInfo.appendChild(priceContainer);
+    productInfo.appendChild(addToCartContainer);
+
+    return productInfo;
+  }
+
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className =
+      "fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg transform transition-transform duration-300 translate-y-full";
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+      toast.style.transform = "translateY(0)";
+    }, 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      toast.style.transform = "translateY(100%)";
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
+  }
+
+  // Create main container
+  const container = document.createElement("div");
+  container.className =
+    "flex flex-col md:flex-row md:items-center max-w-7xl mx-auto py-8 gap-8";
+
+  container.appendChild(createGallery());
+  container.appendChild(createProductInfo());
 
   return container;
 }
